@@ -1,2 +1,27 @@
 /* some style */
 
+
+.state-hud {
+  box-sizing: border-box;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0,0,0,0.5);
+  -webkit-backdrop-filter: blur(3px);
+  -webkit-user-drag: element;
+  color: white;
+  padding: 0.5em 1em;
+  font-family: Menlo, monospace;
+  width: 40vw;
+  z-index: 100;
+}
+
+.state-hud.hide{
+  width: 20px;
+  height: 30px;
+  overflow: hidden;
+}
+
+.state-hud.hide * {
+  display: none;
+}
