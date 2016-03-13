@@ -25,17 +25,27 @@
   []
   (reset! !state (reduce #(Action %2 %1) initial-state @!actions)))
 
+
+;; Fallback Action, gives an informative warning in console when triggering undefined Action.
+
+(defmethod Action :default [{:keys [type] :as action-data} state]
+  (js/console.warn (str "Action " type " with data " (str action-data) " not defined."))
+  state)
+
+
 ;; Making an Action
 
 (defmethod Action :Increment [{:keys [num]} state]
   (update state :counter #(- % num)))
+
 
 (defn root []
   [:div
    [:pre "state: " (str @!state)]
    [:pre "actions: " (str @!actions)]
    [:button {:on-click #(dispatch! {:type :Increment :num 1})} "+1"]
-   [:button {:on-click #(dispatch! {:type :Increment :num 10})} "+10"]])
+   [:button {:on-click #(dispatch! {:type :Increment :num 10})} "+10"]
+   [:button {:on-click #(dispatch! {:type :HelloWorld})} "Error"]])
 
 (r/render [root] (js/document.getElementById "app"))
 
