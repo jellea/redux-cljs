@@ -3,8 +3,7 @@
 
 (enable-console-print!)
 
-(def initial-state {:counter 0
-                    :list []})
+(def initial-state {:counter 0})
 
 (defonce !state (r/atom initial-state))
 
@@ -28,18 +27,14 @@
 
 ;; Making an Action
 
-(defmethod Action :Change [_ state]
-  (update state :list #(conj % "more")))
-
 (defmethod Action :Increment [{:keys [num]} state]
   (update state :counter #(- % num)))
-
 
 (defn root []
   [:div
    [:pre "state: " (str @!state)]
    [:pre "actions: " (str @!actions)]
-   [:button {:on-click #(dispatch! {:type :Change})} "more"]
+   [:button {:on-click #(dispatch! {:type :Increment :num 1})} "+1"]
    [:button {:on-click #(dispatch! {:type :Increment :num 10})} "+10"]])
 
 (r/render [root] (js/document.getElementById "app"))
