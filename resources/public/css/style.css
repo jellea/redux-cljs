@@ -1,2 +1,42 @@
 /* some style */
 
+.state-hud {
+  box-sizing: border-box;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0,0,0,0.5);
+  -webkit-backdrop-filter: blur(3px);
+  -webkit-user-drag: element;
+  color: white;
+  padding: 0.5em 1em;
+  font-family: Menlo, monospace;
+  font-size: 12px;
+  width: 40vw;
+  z-index: 100;
+}
+
+.state-hud.hide{
+  width: 20px;
+  right: 30px;
+  overflow: hidden;
+}
+
+.state-hud.hide * {
+  display: none;
+}
+
+.node {
+    position: absolute;
+    font-family: Didot-italic, "Didot LT STD", Garamond, "Times New Roman", serif;
+    font-style: italic;
+    display: inline-block;
+    margin-left: 100px;
+    z-index: 50;
+
+    background-color: #FBCBCB;
+    width: 200px;
+    height: 140px;
+    border: #222 solid 1px;
+    border-radius: 5px;
+}

@@ -1,4 +1,4 @@
-(defproject redux "0.1.0-SNAPSHOT"
+(defproject spaghetti "0.1.0-SNAPSHOT"
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -10,10 +10,10 @@
                  [org.clojure/clojurescript "1.7.170"]
                  [org.clojure/core.async "0.2.374"
                   :exclusions [org.clojure/tools.reader]]
-                 [reagent "0.6.0-alpha"]]
+                 [reagent "0.6.0-alpha"]
+                 [figwheel-sidecar "0.5.0-6"]]
   
-  :plugins [[lein-figwheel "0.5.0-6"]
-            [lein-cljsbuild "1.1.2" :exclusions [[org.clojure/clojure]]]]
+  :plugins [[lein-cljsbuild "1.1.2" :exclusions [[org.clojure/clojure]]]]
 
   :source-paths ["src"]
 
@@ -21,23 +21,23 @@
 
   :cljsbuild {:builds
               [{:id "dev"
-                :source-paths ["src"]
+                :source-paths ["src" "script"]
 
                 ;; If no code is to be run, set :figwheel true for continued automagical reloading
-                :figwheel {:on-jsload "redux.core/on-js-reload"}
+                :figwheel {:on-jsload "spaghetti.core/on-js-reload"}
 
-                :compiler {:main redux.core
+                :compiler {:main spaghetti.core
                            :asset-path "js/compiled/out"
-                           :output-to "resources/public/js/compiled/redux.js"
+                           :output-to "resources/public/js/compiled/spaghetti.js"
                            :output-dir "resources/public/js/compiled/out"
                            :source-map-timestamp true}}
                ;; This next build is an compressed minified build for
                ;; production. You can build this with:
                ;; lein cljsbuild once min
                {:id "min"
-                :source-paths ["src"]
-                :compiler {:output-to "resources/public/js/compiled/redux.js"
-                           :main redux.core
+                :source-paths ["src" "script"]
+                :compiler {:output-to "resources/public/js/compiled/spaghetti.js"
+                           :main spaghetti.core
                            :optimizations :advanced
                            :pretty-print false}}]}
 
