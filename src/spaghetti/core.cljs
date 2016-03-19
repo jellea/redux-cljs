@@ -17,10 +17,12 @@
 
 (defn root []
   [:div
-   [:button {:on-click #(s/dispatch! {:type :add-node :node-type :oscillator})}
+   [:button {:on-click #(s/dispatch! {:type :add-node :node-type :OscillatorNode})}
     "osc"]
-   #_[:button {:on-click #(s/dispatch! {:type :add-node :node-type :gain})}
+   [:button {:on-click #(s/dispatch! {:type :add-node :node-type :GainNode})}
     "vca"]
+   [:button {:on-click #(s/dispatch! {:type :add-node :node-type :BiquadFilterNode})}
+    "filter"]
 
    [hud/state-hud s/!state s/!actions]
 

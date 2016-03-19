@@ -2,7 +2,8 @@
   (:require [reagent.core :as r]))
 
 (def initial-state {:nodes {}
-                    :wires []
+                    :wires {}
+                    :wiring {}
                     :next-id 1})
 
 (defonce !state (r/atom initial-state))

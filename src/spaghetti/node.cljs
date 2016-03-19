@@ -1,6 +1,8 @@
 (ns spaghetti.node
   (:require [reagent.core :as r]
-            [spaghetti.state :refer [dispatch! Action]]))
+
+            [spaghetti.state :refer [dispatch! Action]]
+            [spaghetti.webaudio :as wa]))
 
 
 
@@ -25,25 +27,25 @@
                       }
               :on-mouse-down #(js/console.log (.-nativeEvent %))
               :on-drag #(dispatch! {:type ::drag
-                                    :x (.-clientX %) :y (.-clientY %)
+                                    :x (.-clientX %)
+                                    :y (.-clientY %)
                                     :address address})
               :on-drag-end #(dispatch! {:type ::drag-end
-                                        :x (.-clientX %) :y (.-clientY %)
+                                        :x (.-clientX %)
+                                        :y (.-clientY %)
                                         :address address})}
    (str "node:" node-type)])
 
-(defmethod node :gain [n]
-  [:div.node "GAIN"])
+(defmethod node :default [{:keys [node-type] :as n} address]
+  (let [node-info (get-in wa/node-types [node-type])
+        node-instance ((:create-fn node-info))]
+    (r/create-class
+      {:component-did-mount
+       #(if-let [mount-fn (:mount-fn node-info)]
+         (mount-fn node-instance))
 
-(defmethod node :default [n address]
-  (r/create-class
-   {:component-did-mount
-    #(println "component-did-mount")
-
-    :component-will-mount
-    #(prn "component-will-mount")
-    :display-name (str "node-" (:node-type n) (:key n))
-    :reagent-render standard-node-ui}))
+       :display-name (str "node-" (:node-type n) (:key n))
+       :reagent-render standard-node-ui})))
 
 
 
