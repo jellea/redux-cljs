@@ -2,7 +2,8 @@
   (:require [reagent.core :as r]
 
             [spaghetti.state :refer [dispatch! Action]]
-            [spaghetti.webaudio :as wa]))
+            [spaghetti.webaudio :as wa]
+            [spaghetti.ioport :as io]))
 
 
 
@@ -16,16 +17,16 @@
 
 
 
-;; Node
+;; NODE
 
 (defmulti node (fn [n _] (:node-type n)))
 
 (defn standard-node-ui [{:keys [dragging? node-type x y]} address]
   [:div.node {:draggable true
-              :style {:transform (str "translate(" x "px," y "px)")
+              :style {:transform (str "translate(" x "px," y "px)")}
                       ;:opacity (if dragging? 0 1)
-                      }
-              :on-mouse-down #(js/console.log (.-nativeEvent %))
+
+              ;:on-mouse-down #(js/console.log (.-nativeEvent %))
               :on-drag #(dispatch! {:type ::drag
                                     :x (.-clientX %)
                                     :y (.-clientY %)
@@ -34,7 +35,12 @@
                                         :x (.-clientX %)
                                         :y (.-clientY %)
                                         :address address})}
-   (str "node:" node-type)])
+   [:h2 (str "node:" node-type)]
+   [io/ports-container (get-in wa/node-types [node-type :io]) address]])
+
+
+
+
 
 (defmethod node :default [{:keys [node-type] :as n} address]
   (let [node-info (get-in wa/node-types [node-type])
@@ -49,7 +55,7 @@
 
 
 
-;; Container
+;; NODES CONTAINER
 
 (defmethod Action ::update-node [{:keys [node-id nested-action]} state]
   (update-in state [:nodes node-id] #(Action nested-action %)))

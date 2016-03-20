@@ -7,20 +7,23 @@
   {:OscillatorNode {:transit-tag "wa-oscillator"
                     :mount-fn (fn [node] (.start node))
                     :create-fn #(.createOscillator ctx)
-                    :io [{:n :type :type :choices :choices ["sine" "triangle" "sawtooth" "square"]
-                      :default "sine"}
-                         {:n :frequency :type :number :default 440}
-                         {:n :detune :type :number :default 0}]}
+                    :io [{:dir :input :n :type :type :choices :choices ["sine" "triangle" "sawtooth" "square"] :default "sine"}
+                         {:dir :input :n :frequency :type :number :default 440}
+                         {:dir :input :n :detune :type :number :default 0}
+                         {:dir :output :n :output}]}
    :MidiNode {:transit-tag "wm-midi"
               :create-fn #(js/WebMIDIAPIWrapper.)
-              :io [{:n :channel :type :number :default 1}
-                   {:n :type :type :choices :choices ["noteon" "noteoff" "poly aftertouch"]
-                    :default "noteon"}]}
+              :io [{:dir :input :n :channel :type :number :default 1}
+                   {:dir :input :n :type :type :choices :choices ["noteon" "noteoff" "poly aftertouch"]
+                    :default "noteon"}
+                   {:dir :output}]}
    :GainNode {:transit-tag "wa-gain"
               :create-fn #(.createGain ctx)
-              :io [:input {:n :gain :type :number :default 1}]}
+              :io [{:dir :input :n :gain :type :number :default 1}
+                   {:dir :output :n :output}]}
    :DelayNode {:create-fn #(.createDelay ctx)
-               :io [:input {:n :delayTime :type :number :default 0}]}
+               :io [{:dir :input :n :delayTime :type :number :default 0}
+                    {:dir :output :n :output}]}
    ;  :AudioBufferSourceNode {:create-fn #(.createBuffer ctx) :io [:playbackRate :loop :loopStart :loopEnd :buffer]}
    ;  :PannerNode {:create-fn #(.createPanner ctx) :io [:input :panningModel :distanceModel :refDistance :maxDistance :rolloffFactor :coneInnerAngle :coneOuterAngle :coneOuterGain]}
    ;  :ConvolverNode {:create-fn #(.createConvolver ctx) :io [:input :buffer :normalize]}
@@ -28,14 +31,15 @@
                             :io [:input :threshold :knee :ratio :reduction :attack :release]}
    :BiquadFilterNode {:transit-tag "wa-biquadfilter"
                       :create-fn #(.createBiquadFilter ctx)
-                      :io [:input {:n :type :type :choices
-                                   :choices ["lowpass" "highpass" "bandpass" "lowshelf"
-                                             "highshelf" "peaking" "notch" "allpass"]
-                                   :default "lowpass"}
-                           {:n :frequency :type :number :default 350}
-                           {:n :Q :type :number :default 1}
-                           {:n :detune :type :number :default 0}
-                           {:n :gain :type :number :default 0}]}
+                      :io [{:dir :input :n :type :type :choices
+                            :choices ["lowpass" "highpass" "bandpass" "lowshelf"
+                                      "highshelf" "peaking" "notch" "allpass"]
+                            :default "lowpass"}
+                           {:dir :input :n :frequency :type :number :default 350}
+                           {:dir :input :n :Q :type :number :default 1}
+                           {:dir :input :n :detune :type :number :default 0}
+                           {:dir :input :n :gain :type :number :default 0}
+                           {:dir :output :n :output}]}
    :WaveShaperNode {:transit-tag "wa-waveshaper"
                     :create-fn #(.createWaveShaper ctx)
                     :io [:input :curve :oversample]}

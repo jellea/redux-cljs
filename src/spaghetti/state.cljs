@@ -21,6 +21,8 @@
     (swap! !state #(Action (assoc (:address action) :nested-action action) %))
     (swap! !state #(Action action %))))  ;; Always return nil because reagent events
 
+;; This is the catch all Action, gives an informative error when you didnt define an Action yet.
+;; You can also use this as copy paste for future Actions ;)
 (defmethod Action :default [{:keys [type] :as action-data} state]
   (js/console.warn (str "Action " type " with data " (str action-data) " not defined."))
   state)
