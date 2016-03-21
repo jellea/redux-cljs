@@ -1,33 +1,20 @@
 (ns spaghetti.core
   (:require [reagent.core :as r]
 
-            [spaghetti.state :as s :refer [Action]]
+            [spaghetti.state :as s :refer [!state]]
             [spaghetti.node :as node]
             [spaghetti.wire :as wire]
-            [spaghetti.hud :as hud]))
+            [spaghetti.hud :as hud]
+            [spaghetti.menu :as menu]))
 
 (enable-console-print!)
 
-;; Fallback Action, gives an informative warning in console when triggering undefined Action.
-
-(defmethod Action :add-node [{:keys [node-type] :as action-data} state]
-  (-> state
-    (update :next-id inc)
-    (update-in [:nodes] assoc (keyword "node" (:next-id state)) {:node-type node-type})))
-
 (defn root []
   [:div
-   [:button {:on-click #(s/dispatch! {:type :add-node :node-type :OscillatorNode})}
-    "osc"]
-   [:button {:on-click #(s/dispatch! {:type :add-node :node-type :GainNode})}
-    "vca"]
-   [:button {:on-click #(s/dispatch! {:type :add-node :node-type :BiquadFilterNode})}
-    "filter"]
-
-   [hud/state-hud s/!state s/!actions]
-
-   [wire/wire-container s/!state]
-   [node/node-container s/!state]])
+   [wire/wire-container !state]
+   [menu/creator-menu (:creator-menu @!state)]
+   [node/node-container !state]
+   [hud/state-hud s/!state s/!actions]])
 
 (r/render [root] (js/document.getElementById "app"))
 

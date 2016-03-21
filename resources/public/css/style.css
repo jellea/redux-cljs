@@ -48,5 +48,36 @@
     height: 100%;
     top: 0px;
     left: 0px;
+    right: 0px;
+    bottom: 0px;
     cursor: copy;
+}
+
+.contextmenu {
+    display: none;
+    position: absolute;
+    margin: 0;
+    padding: 4px;
+    background-color: white;
+    border: 1px solid #444;
+    z-index: 100;
+    opacity: 0.95;
+}
+
+.contextmenu li {
+    list-style-type: none;
+    width: 9em;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.contextmenu li:not(:last-child) {
+    border-bottom: 1px solid #eee;
+}
+
+.contextmenu li:hover {
+    background-color: #e1e1e1;
 }

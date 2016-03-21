@@ -1,42 +1,45 @@
 (ns spaghetti.ioport
-  (:require [spaghetti.state :refer [Action]]))
+  (:require [spaghetti.state :refer [dispatch! Action]]))
 
-;(defn start-wiring [{:keys [ab portid cursor]} wiring]
-;  (swap! wiring assoc ab portid))
+(defmethod Action ::create-wire [action state]
+  (let [new-wiring (select-keys action [:to-node :to-port :from-node :from-port])]
+    (if (and (:wiring state) (not= (:wiring state) new-wiring))
+      (-> state
+        (update :next-id inc)
+        (update-in [:wires] assoc (keyword "wire" (:next-id state))
+          (merge (:wiring state) new-wiring))
+        (dissoc :wiring))
 
-;(add-watch wiring :b
-;  #(let [wires @wiring]
-;    (if (and (not (nil? (:a wires)))
-;          (not (nil? (:b wires))))
-;      (do
-;        (swap! app-state (fn [w] (update-in w [:wires] (fn [o] (conj o {:a (:a wires) :b (:b wires)})))))
-;        (reset! wiring {:a nil :b nil})))))
+      (assoc state :wiring new-wiring))))
+
+
+;; PORT VARIANTS
 
 (defmulti port #(select-keys %1 [:dir :type]))
 
-(defmethod port {:dir :output} [_ _]
-  (prn "output")
+(defmethod port {:dir :output} [{:keys [n]} _ node-id]
   [:div.io.output
-   {};:onClick #(start-wiring {:ab :a :portid parentid})
+   {:onClick #(dispatch! {:type ::create-wire :from-node node-id :from-port n})}
+   (name n)])
 
-   "output"])
-;
-(defmethod port {:dir :input :type :choices} [{:keys [choices value n]} _]
+(defmethod port {:dir :input :type :choices} [{:keys [choices value n]} _ node-id]
   [:div.io.choise.input {} (str (name n))
-   [:span.value [:select {                                  ;:onChange #(change-port-choice (-> % .-target .-value) owner audio-node)
-                          :value value}
-                 (for [choice choices]
-                  ^{:key choice} [:option {:value choice} choice])]]])
+   [:span.value
+    [:select {:on-change #(js/console.log (-> % .-target .-value))
+              :value value}
+     (for [choice choices]
+      ^{:key choice} [:option {:value choice} choice])]]])
 
-;
-;(defmethod port {:dir :input :type :number} [app value]
-;  [:div.io.number.input (str (name (:n app)))
-;   [:span.value {};:onClick #(change-port-value (js/prompt) (:n app) owner audio-node)
-;                value]])
+(defmethod port {:dir :input :type :number} [{:keys [n value]} node-id]
+  [:div.io.number.input
+   (str (name n))
+   [:span.value {:on-click #(prn "num" (js/prompt))}
+                value]])
 
-(defmethod port :default [app _]
-  [:div.io.input {};:onClick #(start-wiring {:ab :b :portid parentid})}
-   (name (:n app))])
+(defmethod port :default [{:keys [n]} _ node-id]
+  [:div.io.input
+   {:on-click #(dispatch! {:type ::create-wire :to-node node-id :to-port n})}
+   (name n)])
 
 ;; PORTS CONTAINER
 
@@ -46,6 +49,4 @@
 (defn ports-container [ports node-address]
   [:div
    (for [p ports]
-    ^{:key (:n p)} [port p {:type ::update-port :port-id p}])])
-
-
+    ^{:key (:n p)} [port p {:type ::update-port :port-id p} (:node-id node-address)])])

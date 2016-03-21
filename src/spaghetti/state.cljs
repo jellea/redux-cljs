@@ -1,10 +1,15 @@
 (ns spaghetti.state
-  (:require [reagent.core :as r]))
+  (:require [reagent.core :as r]
+            [spaghetti.webaudio :as wa]))
 
-(def initial-state {:nodes {}
+(def initial-state {:nodes {:out {:x (- (.-innerWidth js/window) 380)
+                                  :y (- (.-innerHeight js/window) 220)
+                                  :node-type :AudioDestinationNode
+                                  :node-instance (.createGain wa/ctx)}}
                     :wires {}
-                    :wiring {}
-                    :next-id 1})
+                    :creator-menu {:visible true}
+                    :next-id 2})
+
 
 (defonce !state (r/atom initial-state))
 
