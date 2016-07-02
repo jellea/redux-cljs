@@ -1,6 +1,8 @@
 (ns spaghetti.webaudio)
 
-(defonce ctx (js/AudioContext.))
+(defonce ctx
+    (js/AudioContext.))
+
 ;(defonce midi (js/WebMIDIAPIWrapper. true))
 
 (defonce node-types

@@ -3,7 +3,7 @@
             [spaghetti.webaudio :as wa]))
 
 (defmethod Action :add-node [{:keys [node-type x y] :as action-data} state]
-  ;; TODO: get rid of side effect!
+  ;; TODO: get rid of web audio side effect!
   (let [instance ((get-in wa/node-types [node-type :create-fn]))]
     (-> state
       (update :next-id inc)

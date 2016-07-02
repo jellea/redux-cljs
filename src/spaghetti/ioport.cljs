@@ -12,21 +12,25 @@
 
       (assoc state :wiring new-wiring))))
 
+(defmethod Action ::update-port-value [{:keys [value]} state]
+  (assoc state :value value))
 
 ;; PORT VARIANTS
 
 (defmulti port #(select-keys %1 [:dir :type]))
 
-(defmethod port {:dir :output} [{:keys [n]} _ node-id]
+(defmethod port {:dir :output} [{:keys [n]} _ address]
   [:div.io.output
-   {:onClick #(dispatch! {:type ::create-wire :from-node node-id :from-port n})}
+   {:onClick #(dispatch! {:type ::create-wire :from-node address :from-port n})}
    (name n)])
 
-(defmethod port {:dir :input :type :choices} [{:keys [choices value n]} _ node-id]
+(defmethod port {:dir :input :type :choices} [{:keys [choices value n]} port-address _]
   [:div.io.choise.input {} (str (name n))
    [:span.value
-    [:select {:on-change #(js/console.log (-> % .-target .-value))
-              :value value}
+    [:select {:on-change #(dispatch! {:type ::update-port-value
+                                      :value (-> % .-target .-value)
+                                      :address port-address})
+              :defaultValue value}
      (for [choice choices]
       ^{:key choice} [:option {:value choice} choice])]]])
 
@@ -44,9 +48,11 @@
 ;; PORTS CONTAINER
 
 (defmethod Action ::update-port [{:keys [port-id nested-action]} state]
-  (update-in state [:io port-id] #(Action nested-action %)))
+  (update-in state [port-id] #(Action nested-action %)))
 
 (defn ports-container [ports node-address]
   [:div
    (for [p ports]
-    ^{:key (:n p)} [port p {:type ::update-port :port-id p} (:node-id node-address)])])
+    ^{:key (:n p)} [port p {:type ::update-port :port-id (:n p) :address node-address}
+                    node-address])])
+
