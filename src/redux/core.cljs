@@ -15,22 +15,17 @@
 
 (defonce !actions (r/atom []))
 
-(defn dispatch! [action]
-  (swap! !actions conj action))
-
 (defmulti Action (fn [action state] (:type action)))
 
-(add-watch !actions :reduce
-  (fn [_ _ _ new-state]
-    (let [new-action (last new-state)]
-      (swap! !state #(Action new-action %)))))
+(defn dispatch! [action]
+  (swap! !actions conj action)
+  (swap! !state #(Action action %)))
 
 (defn rereduce!
   "Reduce past actions over state to get a fresh copy. As all actions
   are stored as data, changes in actions will be projected on state."
   []
   (reset! !state (reduce #(Action %2 %1) initial-state @!actions)))
-
 
 
 ;; HELPERS --------------------------------------------------------------------
@@ -91,7 +86,7 @@
                            (dispatch! {:type :AddTodo :val value})
                            (set! (.. (utils/get-elem "todo-input") -value) "")))
                         (.preventDefault e))}
-    [:input.new-todo {:autofocus "autofocus" :id "todo-input"
+    [:input.new-todo {:autoFocus "autofocus" :id "todo-input"
                       :placeholder "What needs to be done?"}]]])
 
 
@@ -150,6 +145,7 @@
        (doall (map-indexed todo-ui (:todos state)))]
       [footer-ui state]])])
 
+
 (defn state-hud [state]
   (let [!display? (r/atom true)
         !pos (r/atom [20 20])]
@@ -158,6 +154,7 @@
                        :on-double-click #(swap! !display? not)}
        [:p (str state)]
        [:p (str (take-last 10 @!actions))]])))
+
 
 (defn root-ui [!state]
   (let [state @!state]
@@ -171,7 +168,6 @@
   "Hook for figwheel reload"
   []
   (rereduce!))
-
 
 
 ;; ROUTING --------------------------------------------------------------------
