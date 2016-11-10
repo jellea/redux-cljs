@@ -9,23 +9,29 @@
 
 (enable-console-print!)
 
-(def initial-state (or (load-local-storage :todomvc) {}))
+;; Load storage should be an action
+(def initial-state {:new-id 1})
 
 (defonce !state (local-storage (r/atom initial-state) :todomvc))
 
-(defonce !actions (r/atom []))
-
 (defmulti Action (fn [action state] (:type action)))
+
+(defonce !actions (r/atom []))
 
 (defn dispatch! [action]
   (swap! !actions conj action)
   (swap! !state #(Action action %)))
+
+;(dispatch! {:type :LoadLocalStorage})
 
 (defn rereduce!
   "Reduce past actions over state to get a fresh copy. As all actions
   are stored as data, changes in actions will be projected on state."
   []
   (reset! !state (reduce #(Action %2 %1) initial-state @!actions)))
+
+
+
 
 
 ;; HELPERS --------------------------------------------------------------------
@@ -48,21 +54,29 @@
   (js/console.warn (str "Action " type " with data " (str action-data) " not defined."))
   state)
 
+(defmethod Action :LoadLocalStorage [_ _]
+  (load-local-storage :todomvc))
+
 (defmethod Action :AddTodo [{:keys [val]} state]
-  (update state :todos #(conj % {:title val})))
+  (-> state
+      (update :todos #(vec (conj % {:title val :id (:new-id state)})))
+      (update :new-id inc)))
 
-(defmethod Action :EditingTodo [{:keys [index]} state]
-  (update-in state [:todos index :editing?] not))
+(defmethod Action :EditingTodo [{:keys [todo]} state]
+  (update state :todos (fn [t] (map #(assoc % :editing? (= todo %))
+                                    t))))
 
-(defmethod Action :EditTodo [{:keys [index val]} state]
-  (-> state (assoc-in [:todos index :title] val)
-            (assoc-in [:todos index :editing?] false)))
+(defmethod Action :EditTodo [{:keys [todo val]} state]
+  (update state :todos (fn [t] (map #(if (= todo %)
+                                         (assoc % :title val :editing? false)
+                                         %)
+                                 t))))
 
-(defmethod Action :DelTodo [{:keys [index]} state]
-  (update state :todos #(utils/vec-remove % index)))
+(defmethod Action :DelTodo [{:keys [todo]} state]
+  (update state :todos (fn [t] (filter (partial not= todo) t))))
 
-(defmethod Action :ToggleTodo [{:keys [index checked]} state]
-  (assoc-in state [:todos index :completed?] checked))
+(defmethod Action :ToggleTodo [{:keys [todo checked]} state]
+  (update state :todos (fn [t] (map #(if (= todo %) (assoc % :completed? checked) %) t))))
 
 (defmethod Action :SelectFilter [{:keys [filter]} state]
   (assoc state :filter filter))
@@ -107,8 +121,8 @@
     {:on-click #(dispatch! {:type :ClearCompleted})} "Clear completed"]])
 
 
-(defn todo-ui [i todo]
-  ^{:key (:title todo)}
+(defn todo-ui [{:keys [id] :as todo}]
+  ^{:key id}
   [:li {:class (str (when (:completed? todo) "completed")
                  (when (:editing? todo) "editing"))
         :style (when (or (and
@@ -120,14 +134,14 @@
    [:div.view
     [:input.toggle {:type "checkbox"
                     :checked (:completed? todo)
-                    :on-change #(dispatch! {:type :ToggleTodo :index i
+                    :on-change #(dispatch! {:type :ToggleTodo :todo todo
                                             :checked (.-checked (.-target %))})}]
-    [:label {:on-double-click #(dispatch! {:type :EditingTodo :index i})}
+    [:label {:on-double-click #(dispatch! {:type :EditingTodo :todo todo})}
      (:title todo)]
-    [:button.destroy {:on-click #(dispatch! {:type :DelTodo :index i})}]]
+    [:button.destroy {:on-click #(dispatch! {:type :DelTodo :todo todo})}]]
 
    [:form {:on-submit (fn [e] (let [value (-> e .-target (.querySelector ".edit") .-value)]
-                                (dispatch! {:type :EditTodo :index i :val value}))
+                                (dispatch! {:type :EditTodo :todo todo :val value}))
                         (.preventDefault e))}
     [:input.edit {:default-value (:title todo)}]]])
 
@@ -141,8 +155,9 @@
                           :on-click #(dispatch! {:type :ToggleAll
                                                  :checked (.-checked (.-target %))})}]
       [:label {:for "toggle-all"} "Mark all as complete"]
-      [:ul.todo-list
-       (doall (map-indexed todo-ui (:todos state)))]
+      (into
+        [:ul.todo-list]
+        (map todo-ui (:todos state)))
       [footer-ui state]])])
 
 
@@ -167,6 +182,7 @@
 (defn on-js-reload
   "Hook for figwheel reload"
   []
+  (prn "reload!")
   (rereduce!))
 
 
