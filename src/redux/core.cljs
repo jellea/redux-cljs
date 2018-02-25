@@ -14,24 +14,119 @@
 
 (defonce !state (local-storage (r/atom initial-state) :todomvc))
 
-(defmulti Action (fn [action state] (:type action)))
+(def initial-state {:count 0
+                    :self nil
+                    :checkout {}})
+
+(def ^:dynamic *updating* false)
+
+(defn validate-state
+  [new-val]
+  (when-not *updating*
+    (js/console.log "Deprecated: updating state outside of an Action"))
+  true)
+
+(defonce !state (r/atom initial-state))
+
+(defonce _validator
+  (set-validator! !state validate-state))
 
 (defonce !actions (r/atom []))
 
-(defn dispatch! [action]
-  (swap! !actions conj action)
-  (swap! !state #(Action action %)))
+(defmulti Action
+  "An Action is a pure function which manipulates the state.
 
-;(dispatch! {:type :LoadLocalStorage})
+
+  Create an Action like this:
+  (defmethod Action :my-first-action [{:keys [type custom-data]} state]
+    (assoc state :data custom-data))
+
+  It takes the action data and the current state. Make sure you always return the state!
+  "
+  (fn [state action-data] (:type action-data)))
+
+;; Handlers for side-effects
+
+(defprotocol IHandler
+  (get-result [this]))
+
+(extend-protocol IHandler
+  nil
+  (get-result [this] {})
+  object
+  (get-result [this] {:state this}))
+
+(defrecord FX [fx state]
+  IHandler
+  (get-result [this] {:state state :fx fx}))
+
+(defn effects
+  ;; feedback confusion because inconsisten with Actions
+  ([fx] (effects fx nil))
+  ([fx state]
+   (assert (sequential? fx) "Effects must be sequential")
+   (FX. fx state)))
+
+(defmulti Effect (fn [_ effect-data] (:type effect-data)))
+
+(defn dispatch!
+  "Add Action to the history for re-reduces and directly applies Action to state.
+
+  e.g. (dispatch! {:type :cool-action :custom-cool-data \"Well, hello!\"})"
+  [action-data]
+  (when js/goog.DEBUG
+    (swap! !actions conj action-data)
+    (log/info (str "[" (:type action-data) "]" " Action dispatched! Data: " (pretty/redact (dissoc action-data :type)))))
+
+  (binding [*updating* true]
+    (let [prev-state @!state
+          {:keys [state fx] :as result} (get-result (Action prev-state action-data))]
+      ;; do not update state if fn returned nil
+      (when state
+        (reset! !state state))
+      (doseq [effect-data fx]
+        (Effect (or state prev-state) effect-data))))
+  nil) ;; Always return nil because reagent events
+
+;; This is the catch all Action, gives an informative error when you didnt define an Action yet.
+;; You can also use this as copy paste for future Actions ;)
+(defmethod Action :default [state {:keys [type] :as action-data}]
+  (js/console.warn (str "Action " type " with data " (str action-data) " not defined."))
+  state)
+
+(defmethod Effect :default [state {:keys [type] :as effect-data}]
+  (js/console.warn (str "Effect " type " with data " (str effect-data) " not defined.")))
 
 (defn rereduce!
   "Reduce past actions over state to get a fresh copy. As all actions
   are stored as data, changes in actions will be projected on state."
   []
-  (reset! !state (reduce #(Action %2 %1) initial-state @!actions)))
+  (reset! !state (reduce (fn [state action]
+                           (or (get-result (Action state action)) state))
+                         initial-state
+                         @!actions)))
 
+(defn undo! []
+  (swap! !actions drop-last)
+  (rereduce!))
 
+(defn replay-action [actions]
+  ;; TODO: make screenshot!
+  (when (seq actions)
+    ;; this doesnt do side-effects yet
+    (swap! !state Action (first actions))
+    (r/after-render #(replay-action (rest actions)))))
 
+(defn replay! [actions]
+  (reset! !state initial-state)
+  (r/after-render #(replay-action actions)))
+
+(defn prn-state []
+  (prn @!state))
+
+(defmethod Action ::reset
+  [state _]
+  (merge state initial-state))
 
 
 ;; HELPERS --------------------------------------------------------------------
